@@ -13,5 +13,8 @@
     ],
     "require": {
 
+    },
+    "autoload": {
+        "psr-0": {"aprendePHP\\": "src/"}
     }
 }

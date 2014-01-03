@@ -1,5 +1,6 @@
 <?php
 
-include_once __DIR__ . '/../src/aprendePHP/Application.php';
+require __DIR__ . '/../vendor/autoload.php';
 
-echo aprendePHP\Application\index();
+$app = new aprendePHP\Application();
+echo $app->index();

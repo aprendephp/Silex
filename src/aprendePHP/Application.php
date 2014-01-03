@@ -1,7 +1,12 @@
 <?php
 
-namespace aprendePHP\Application;
+namespace aprendePHP;
 
-function index(){
-  return "Hola mundo";
+class Application {
+
+  function index(){
+    return "Hola mundo";
+  }
+
 }
+

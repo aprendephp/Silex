@@ -3,4 +3,5 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 $app = new aprendePHP\Application();
-echo $app->index();
+$app->index();
+$app->run();

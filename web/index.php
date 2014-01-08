@@ -2,4 +2,7 @@
 
 include_once __DIR__ . '/../src/aprendePHP/Application.php';
 
-echo aprendePHP\Application\index();
+use aprendePHP\Application;
+
+$app = new Application();
+$app->index();

@@ -7,16 +7,31 @@ use Symfony\Component\HttpFoundation\Response;
 
 class Application {
 
-  public function __construct(){
-    $this->response = new Response();
-    $this->request = Request::createFromGlobals();
+  public function __construct(Response $response, Request $request){
+    $this->response = $response;
+    $this->request = $request;
   }
 
   function index(){
     $path = $this->request->getPathInfo();
-    $this->response->setContent(
-      "<html><head></head><body>Esta peticion fue hecha en la url: " . $path . "</body></html>"
-    );
+    
+    $this->get($path);
+  }
+
+  public function get($path){
+
+  	switch ($path) {
+  		case '/':
+  			$this->response->setContent('Index');
+  			break;
+  		case '/contacto':
+  			$this->response->setContent('Contacto');
+  			break;
+  		default:
+  			$this->response->setContent('Pagina no encontrada.');
+  			break;
+  	}
+  	
   }
 
   public function run(){

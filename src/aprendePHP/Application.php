@@ -7,34 +7,59 @@ use Symfony\Component\HttpFoundation\Response;
 
 class Application {
 
+  protected $response;
+  protected $request;
+  protected $path;
+
   public function __construct(Response $response, Request $request){
     $this->response = $response;
     $this->request = $request;
+    $path = [];
   }
 
-  function index(){
+  public function get($path, $callback){
+    $this->paths[$path]['method'] = 'GET';
+    $this->paths[$path]['callback']= $callback;
+  }
+
+  public function post($path, $callback){
+    $this->paths[$path]['method'] = 'POST';
+    $this->paths[$path]['callback']= $callback;
+  }
+
+  public function put($path, $callback){
+    $this->paths[$path]['method'] = 'PUT';
+    $this->paths[$path]['callback']= $callback;
+  }
+
+  public function delete($path, $callback){
+    $this->paths[$path]['method'] = 'DELETE';
+    $this->paths[$path]['callback']= $callback;
+  }
+
+  public function boot(){
     $path = $this->request->getPathInfo();
-    
-    $this->get($path);
-  }
 
-  public function get($path){
+    // If path exist and method is correct
+    if (array_key_exists($path, $this->paths) &&
+      $this->paths[$path]['method'] == $this->request->getMethod()){
+      $r = call_user_func($this->paths[$path]['callback']);
 
-  	switch ($path) {
-  		case '/':
-  			$this->response->setContent('Index');
-  			break;
-  		case '/contacto':
-  			$this->response->setContent('Contacto');
-  			break;
-  		default:
-  			$this->response->setContent('Pagina no encontrada.');
-  			break;
-  	}
-  	
+      if ($r instanceof Response){
+        $this->response = $r;
+      }
+      else {
+        $this->response->setContent($r);
+      }
+    }
+    else{
+      $this->response->setStatusCode(404);
+      $this->response->setContent("Page not found");
+    }
   }
 
   public function run(){
+    $this->boot();
     $this->response->send();
   }
 

@@ -4,7 +4,6 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Cookie;
 
@@ -15,6 +14,10 @@ $app = new aprendePHP\Application($response, $request);
 
 $app->get('/', function () use($app){
   return "index";
+});
+
+$app->get('/hello/{name}', function ($request) use($app){
+  return "Hello " . $request->attributes->get('name');
 });
 
 $app->get('/images', function () use($app, $request){

@@ -5,6 +5,12 @@ namespace aprendePHP;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+use Symfony\Component\Routing\Matcher\UrlMatcher;
+use Symfony\Component\Routing\RequestContext;
+use Symfony\Component\Routing\RouteCollection;
+use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\Exception\ResourceNotFoundException;
+
 class Application {
 
   protected $response;
@@ -14,22 +20,29 @@ class Application {
   public function __construct(Response $response, Request $request){
     $this->response = $response;
     $this->request = $request;
-    $path = [];
+    $this->path = [];
+    $this->routes = new RouteCollection();
   }
 
   public function get($path, $callback){
-    $this->paths[$path]['method'] = 'GET';
-    $this->paths[$path]['callback']= $callback;
+    $this->routes->add($path, new Route($path,[
+      'callback'=>$callback,
+      'method' => 'GET'
+    ]));
   }
 
   public function post($path, $callback){
-    $this->paths[$path]['method'] = 'POST';
-    $this->paths[$path]['callback']= $callback;
+    $this->routes->add($path, new Route($path,[
+      'callback'=>$callback,
+      'method' => 'POST'
+    ]));
   }
 
   public function put($path, $callback){
-    $this->paths[$path]['method'] = 'PUT';
-    $this->paths[$path]['callback']= $callback;
+    $this->routes->add($path, new Route($path,[
+      'callback'=>$callback,
+      'method' => 'PUT'
+    ]));
   }
 
   public function delete($path, $callback){
@@ -40,21 +53,36 @@ class Application {
   public function boot(){
     $path = $this->request->getPathInfo();
 
-    // If path exist and method is correct
-    if (array_key_exists($path, $this->paths) &&
-      $this->paths[$path]['method'] == $this->request->getMethod()){
-      $r = call_user_func($this->paths[$path]['callback']);
+    $context = new RequestContext();
+    $context->fromRequest($this->request);
+    $matcher = new UrlMatcher($this->routes, $context);
 
-      if ($r instanceof Response){
-        $this->response = $r;
+    try {
+
+      $this->request->attributes->add(
+        $matcher->match(
+          $this->request->getPathInfo()
+        )
+      );
+
+      if ($this->request->getMethod() == $this->request->attributes->get('method')){
+        $response = call_user_func(
+          $this->request->attributes->get('callback'),
+          $this->request
+        );
+
+        if ($response instanceof Response){
+          $this->response = $response;
+        }
+        else {
+          $this->response->setContent($response);
+        }
       }
-      else {
-        $this->response->setContent($r);
+      else{
+        $this->response = new Response('Not Found', 404);
       }
-    }
-    else{
-      $this->response->setStatusCode(404);
-      $this->response->setContent("Page not found");
+    } catch (ResourceNotFoundException $e) {
+      $this->response = new Response('Not Found', 404);
     }
   }
 

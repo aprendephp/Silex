@@ -13,11 +13,22 @@ $request = Request::createFromGlobals();
 $app = new aprendePHP\Application($response, $request);
 
 $app->get('/', function() use($request){
-
 	if ($request->cookies->get('colaborador') == 'on')
 		return "Gracias por tu aporte";
 	else
 		return "Bienvenido";
+});
+
+$app->get('/hello/{name}',function($request){
+	return "Hola " . $request->attributes->get('name'); 
+});
+
+$app->get('/noticias/{year}/{category}/{slug}',function($request){
+	$texto = "year: " . $request->attributes->get('year') . "<br>";
+	$texto .= "category " . $request->attributes->get('category') . "<br>";
+	$texto .= "slug " . $request->attributes->get('slug') . "<br>"; 
+
+	return $texto;
 });
 
 $app->get('/contacto', function(){ 

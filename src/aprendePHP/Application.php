@@ -12,6 +12,7 @@ use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
+use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 
 class Application {
 
@@ -42,7 +43,7 @@ class Application {
 
   public function get($path, $callback){
     $route = new Route($path,[
-      'controller'=> $callback,
+      '_controller'=> $callback,
       'method' => 'GET'
     ]);
     $this->routes->add($path,$route);
@@ -50,7 +51,7 @@ class Application {
 
   public function post($path, $callback){
    $route = new Route($path,[
-      'controller'=> $callback,
+      '_controller'=> $callback,
       'method' => 'POST'
     ]);
     $this->routes->add($path,$route); 
@@ -58,7 +59,7 @@ class Application {
 
   public function delete($path, $callback){
     $route = new Route($path,[
-      'controller'=> $callback,
+      '_controller'=> $callback,
       'method' => 'DELETE'
     ]);
     $this->routes->add($path,$route);
@@ -66,7 +67,7 @@ class Application {
 
   public function put($path, $callback){
     $route = new Route($path,[
-      'controller'=> $callback,
+      '_controller'=> $callback,
       'method' => 'PUT'
     ]);
     $this->routes->add($path,$route);
@@ -77,16 +78,22 @@ class Application {
     $context = new RequestContext();
     $context->fromRequest($this->request);
     $matcher = new UrlMatcher($this->routes, $context);
+    $resolver = new ControllerResolver();
 
     $path = $this->request->getPathInfo();
     try{
+
       $params = $matcher->match($path);
       $this->request->attributes->add($params);
 
       if ($this->request->getMethod() == $params['method']){
-        $response = call_user_func(
-          $this->request->attributes->get('controller'),
-          $this->request
+        
+        $controller = $resolver->getController($this->request);
+        $arguments = $resolver->getArguments($this->request, $controller);
+        
+        $response = call_user_func_array(
+          $controller,
+          $arguments
         );
 
         if ($response instanceof Response){

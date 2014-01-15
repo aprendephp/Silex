@@ -5,15 +5,20 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Cookie;
 
-$app->get('/', function() use($request){
+$app->get('/', function(Request $request) use($twig){
 	if ($request->cookies->get('colaborador') == 'on')
-		return "Gracias por tu aporte";
+		$mensaje = 'Gracias por colaborar';
 	else
-		return "Bienvenido";
+		$mensaje = 'Bienvenido';
+
+	return $twig->render('index.html.twig',['mensaje'=>$mensaje]);
 });
 
-$app->get('/hello/{name}/{lastname}',function($name, $lastname){
-	return "Hola " . $name . ' ' . $lastname . '<br>attributes: ';
+$app->get('/hello/{name}/{lastname}',function($name, $lastname) use($twig){
+	return $twig->render('hello.html.twig',[
+		'name'=> $name, 
+		'lastname'=> $lastname
+	]);
 });
 
 $app->get('/noticias/{year}/{category}/{slug}',function ($year, $category, $slug){

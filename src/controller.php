@@ -14,38 +14,37 @@ $app->get('/', function(Request $request) use($twig){
 	return $twig->render('index.html.twig',['mensaje'=>$mensaje]);
 });
 
-$app->get('/hello/{name}/{lastname}',function($name, $lastname) use($twig){
+$app->get('/hello/{name}',function($name) use($twig){
 	return $twig->render('hello.html.twig',[
-		'name'=> $name, 
-		'lastname'=> $lastname
+		'name'=> $name
 	]);
 });
 
 $app->get('/noticias/{year}/{category}/{slug}',function ($year, $category, $slug){
 	$texto = "year: " . $year . "<br>";
 	$texto .= "category " . $category . "<br>";
-	$texto .= "slug " . $slug . "<br>"; 
+	$texto .= "slug " . $slug . "<br>";
 
 	return $texto;
 });
 
-$app->get('/contacto', function(){ 
-	return "contacto"; 
+$app->get('/contacto', function(){
+	return "contacto";
 });
 
-$app->get('/quienes', function(){ 
-	return new RedirectResponse('contacto'); 
+$app->get('/quienes', function(){
+	return new RedirectResponse('contacto');
 });
 
 $app->post('/enviar-email', function(){
 	return "Email enviado";
 });
 
-$app->post('/beer/add', function() use($request){
+$app->post('/beer/add', function(Request $request) {
 	$name = $request->request->get('name');
 	$image = $request->files->get('image');
 	$image->move(__DIR__ . '/uploads', $image->getClientOriginalName());
-	
+
 	$r = new RedirectResponse('/web/index.php');
 	$r->headers->setCookie(new Cookie('colaborador','on'));
 	return $r;

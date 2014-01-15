@@ -3,17 +3,29 @@
 <head>
 
 	<title>{% block title %}{% endblock %} Aprende Silex</title>
-
 	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+
 </head>
+
 <body>
 
 	<div class="container">
-		{% block container %}	
-			Override
+		{% block container %}
+
+			<div class="header page-header">
+				{% block header %}{% endblock %}
+			</div>
+
+			<div class="content col-md-8">
+				{% block content %}{% endblock %}
+			</div>
+
+			<div class="sidebar-first col-md-4">
+				{% block sidebar_second %}{% endblock %}
+			</div>
 		{% endblock %}
 
-		<footer>
+		<footer class="panel-footer col-md-12">
 			{% block footer %}
 				curso de silex
 			{% endblock %}

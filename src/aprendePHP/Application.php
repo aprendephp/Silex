@@ -13,18 +13,12 @@ use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\HttpKernel\HttpKernel;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\EventListener\RouterListener;
 
-class Application {
-
-  /**
-   * @Symfony\Component\HttpFoundation\Response
-   */
-  private $response;
-
-  /**
-   * @Symfony\Component\HttpFoundation\Request
-   */
-  private $request;
+class Application extends HttpKernel implements HttpKernelInterface{
 
   /**
    * @Symfony\Component\Routing\RouteCollection
@@ -33,12 +27,13 @@ class Application {
 
   /**
    * @param $response Symfony\Component\HttpFoundation\Response
-   * @param $request Symfony\Component\HttpFoundation\Request 
+   * @param $request Symfony\Component\HttpFoundation\Request
    */
-  public function __construct(Response $response, Request $request){
-    $this->response = $response;
-    $this->request = $request;
+  public function __construct(EventDispatcher $dispatcher, ControllerResolver $resolver){
+    $this->dispatch = $dispatcher;
+    $this->resolver = $resolver;
     $this->routes = new RouteCollection();
+    parent::__construct($dispatcher,$this->resolver);
   }
 
   public function get($path, $callback){
@@ -54,7 +49,7 @@ class Application {
       '_controller'=> $callback,
       'method' => 'POST'
     ]);
-    $this->routes->add($path,$route); 
+    $this->routes->add($path,$route);
   }
 
   public function delete($path, $callback){
@@ -73,51 +68,31 @@ class Application {
     $this->routes->add($path,$route);
   }
 
-  public function boot(){
+  public function handle(Request $request, $type = 1, $catch = true){
 
     $context = new RequestContext();
-    $context->fromRequest($this->request);
+    $context->fromRequest($request);
     $matcher = new UrlMatcher($this->routes, $context);
-    $resolver = new ControllerResolver();
 
-    $path = $this->request->getPathInfo();
-    try{
+    $this->dispatcher->addSubscriber(new RouterListener($matcher));
+    $response = parent::handle($request, $type, $catch);
 
-      $params = $matcher->match($path);
-      $this->request->attributes->add($params);
-
-      if ($this->request->getMethod() == $params['method']){
-        
-        $controller = $resolver->getController($this->request);
-        $arguments = $resolver->getArguments($this->request, $controller);
-        
-        $response = call_user_func_array(
-          $controller,
-          $arguments
-        );
-
-        if ($response instanceof Response){
-          $this->response = $response;
-        }
-        else{
-          $this->response->setContent($response);
-        }
-      }
-      else{
-        $this->response->setStatusCode(404);
-        $this->response->setContent('Page not found');  
-      }
-    }
-    catch( ResourceNotFoundException $e){
-      $this->response->setStatusCode(404);
-      $this->response->setContent('Page not found');
-    }
-
+    return $response;
   }
 
-  public function run(){
-    $this->boot();
-    $this->response->send();
+  public function run(Request $request = null){
+
+    if (null === $request){
+      $request = Request::createFromGlobals();
+    }
+
+    $response = $this->handle($request);
+    $response->send();
+    $this->terminate($request,$response);
+  }
+
+  public function terminate(Request $request, Response $response){
+    parent::terminate($request, $response);
   }
 
 }

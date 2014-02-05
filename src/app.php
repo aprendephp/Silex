@@ -1,14 +1,30 @@
 <?php
 
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Silex\Application;
+use Silex\Provider\TwigServiceProvider;
+use Silex\Provider\UrlGeneratorServiceProvider;
+use Silex\Provider\ValidatorServiceProvider;
+use Silex\Provider\ServiceControllerServiceProvider;
 
-$response = new Response();
-$request = Request::createFromGlobals();
+$app = new Application();
+$app->register(new UrlGeneratorServiceProvider());
+$app->register(new ValidatorServiceProvider());
+$app->register(new ServiceControllerServiceProvider());
+$app->register(new TwigServiceProvider(), array(
+    'twig.path'    => array(__DIR__.'/../templates'),
+    'twig.options' => array('cache' => __DIR__.'/../cache/twig'),
+));
+$app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
+    // add custom globals, filters, tags, ...
+    return $twig;
+}));
 
-$loader = new \Twig_Loader_Filesystem(__DIR__ . '/../templates');
-$twig = new \Twig_Environment($loader);
+$app->register(new Silex\Provider\DoctrineServiceProvider(),[
+	'db.options' => [
+		'driver' => 'pdo_sqlite',
+		'path' => __DIR__ . '/../var/db/beers.db'
+	]
+]);
 
-$app = new aprendePHP\Application($response, $request);
 
 return $app;
